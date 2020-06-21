@@ -2,7 +2,7 @@
 This project allows you to build a minimal AWS cli docker container. It's much smaller than any other AWS cli docker container I've found.
 
 ## Why?
-I have a need for a container that does literally _one thing_ with AWS cli as part of my CI pipeline. I don't like the fact that this container ends up over 350mb even though it's a single Python module and a docker-entrypoint.sh. So I thought I'd try to minimize. Also: Why not?
+I have a need for a container that does literally _one thing_ with AWS cli as part of my CI pipeline. I don't like the fact that this container ends up over 350mb even though it's a single Python module and a docker-entrypoint.sh. This process results in an image size of less than 75mb. (Also: Why the hell not?)
 
 ## How?
 1. Pip install AWS cli v2 (Oh yes you _can_! See [this](https://github.com/aws/aws-cli/issues/4947#issuecomment-585948174) comment.)
