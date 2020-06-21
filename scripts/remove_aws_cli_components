@@ -1,0 +1,40 @@
+#!/bin/sh
+## Finds and removes AWS cli components based on your required test functions
+
+export PATH=${PATH}:/opt/aws-cli/bin
+export PYTHONPATH=/opt/aws-cli
+export botocore_dir=$(find ${PYTHONPATH} -type d -name botocore)
+export backup_dir=/tmp/awscli_backup
+
+die () {
+ echo "$1"
+ exit $2
+}
+
+test_awscli_commands() {
+  cat /tmp/aws_cli_commands_list.txt | while read command; do
+    sh -c "${command}" >/dev/null 2>&1 || return 1
+  done
+}
+
+# EXIT OK if component list exist
+[ -f /tmp/keep_components.txt ] || die "FATAL: Cannot remove unwanted components because 'keep_components.txt' file does not exist" 1
+
+# MAIN
+mkdir -p ${backup_dir}
+
+cat /tmp/keep_components.txt | while read component; do
+  mv ${botocore_dir}/data/${component} ${backup_dir}/
+done
+
+rm -rf ${botocore_dir}/data/*
+mv ${backup_dir}/* ${botocore_dir}/data/
+
+rm -rf /opt/aws-cli/awscli/customizations
+test_awscli_commands || die "FATAL: AWS client does not work after removing '/opt/aws-cli/awscli/customizations' directory" 1
+
+rm -rf /opt/aws-cli/awscli/examples
+test_awscli_commands || die "FATAL: AWS client does not work after removing '/opt/aws-cli/awscli/examples' directory" 1
+
+echo "Removed all botocore/data components except these:"
+cat /tmp/keep_components.txt

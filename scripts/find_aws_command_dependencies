@@ -1,0 +1,54 @@
+#!/bin/sh
+## Finds and removes AWS cli components based on your required test functions
+
+export PATH=${PATH}:/opt/aws-cli/bin
+export PYTHONPATH=/opt/aws-cli
+export botocore_dir=$(find ${PYTHONPATH} -type d -name botocore)
+export backup_dir=/tmp/awscli_backup
+
+die () {
+ echo "$1"
+ exit $2
+}
+
+test_awscli_commands() {
+  cat /tmp/aws_cli_commands_list.txt | while read command; do
+    sh -c "${command}" >/dev/null 2>&1 || return 1
+  done
+}
+
+# EXIT OK if component list exist
+[ -f /tmp/keep_components.txt ] && die "Dependency finder script will not run because file 'keep_components.txt' exists" 0
+
+# EXIT FAIL if an AWS cli command list is not found
+[ -f /tmp/aws_cli_commands_list.txt ] || die "FATAL: Cannot generate a list of dependencies without the file 'aws_cli_commands_list.txt'" 1
+
+# MAIN
+mkdir -p ${backup_dir}
+
+echo "Verifying that AWS cli works, and that you are authenticated..."
+aws help | grep -q sts || die "AWS client does not work" 1
+aws sts get-caller-identity || aws configure || die "Could not authenticate user" 1
+
+echo "Looking for botocore/data components required to run the following commands:"
+cat /tmp/aws_cli_commands_list.txt 
+echo
+
+ls -r ${botocore_dir}/data/ | while read component; do
+  mv "${botocore_dir}/data/${component}" "${backup_dir}"
+  test_awscli_commands
+  if [ $? -ne 0 ]; then
+    mv "${backup_dir}/${component}" "${botocore_dir}/data/"
+    echo "Require botocore component: ${component}"
+    echo "${component}" >> /tmp/keep_components.txt
+    test_awscli_commands || die "Failed without ${component}. Retored ${component}, but tests still dail." 1
+  fi
+  sleep 1
+done
+
+test_awscli_commands || die "FATAL: AWS client does not work after removing components" 1
+
+echo
+
+echo "Add these lines to 'files/keep_components.txt' to skip the dependency finder next time:"
+cat /tmp/keep_components.txt
