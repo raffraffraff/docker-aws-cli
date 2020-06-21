@@ -23,15 +23,20 @@ test_awscli_commands() {
 # MAIN
 mkdir -p ${backup_dir}
 
+echo Before we begin to remove components, make sure aws cli still works
+test_awscli_commands || die "FATAL: AWS client does not work" 1
+
+echo "OK. Now removing unnecessary components from ${botocore_dir}/data/${component}"
 cat /tmp/keep_components.txt | while read component; do
   mv ${botocore_dir}/data/${component} ${backup_dir}/
 done
 
 rm -rf ${botocore_dir}/data/*
 mv ${backup_dir}/* ${botocore_dir}/data/
+test_awscli_commands || die "FATAL: AWS client does not work after removing components" 1
 
-rm -rf /opt/aws-cli/awscli/customizations
-test_awscli_commands || die "FATAL: AWS client does not work after removing '/opt/aws-cli/awscli/customizations' directory" 1
+#rm -rf /opt/aws-cli/awscli/customizations
+#test_awscli_commands || die "FATAL: AWS client does not work after removing '/opt/aws-cli/awscli/customizations' directory" 1
 
 rm -rf /opt/aws-cli/awscli/examples
 test_awscli_commands || die "FATAL: AWS client does not work after removing '/opt/aws-cli/awscli/examples' directory" 1
