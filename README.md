@@ -10,7 +10,7 @@ I have a need for a container that does literally _one thing_ with AWS cli as pa
 3. Remove all non-essential components
 
 ### How do you find out which components you need?
-Once you pip install the AWS cli, you end up with a lot of subdirectories under `${install_path}../botocore/data`. If your container has pretty simple requirements, there's likely about 80mb of 'stuff' that you do not require. To find out what 'stuff' you need to keep, add your list of commands to a file called `command_list.txt` and build this container. This step is pretty slow because the script needs to verify  that your commands still work after removing each component from the AWS cli. However, once you've identified those components, you can delete the `files/aws_cli_commands_list.txt` file and add the list of components to the `files/keep_components.txt`.
+Once you pip install the AWS cli, you end up with a lot of subdirectories under `${PYTHONPATH}/botocore/data`. If your container has pretty simple requirements, there's likely about 80mb of 'stuff' that you do not require. To find out what 'stuff' you need to keep, add your list of commands to a file called `command_list.txt` and build this container. This step is pretty slow because the script needs to verify  that your commands still work after removing each component from the AWS cli. However, once you've identified those components, you can delete the `files/aws_cli_commands_list.txt` file and add the list of components to the `files/keep_components.txt`.
 
 ### Authenticating AWS client
 For the component testing to work, the AWS client must be authenticated. There are two ways that this can be done, depending on where you build the container:
